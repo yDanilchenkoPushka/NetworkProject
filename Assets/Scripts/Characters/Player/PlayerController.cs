@@ -46,6 +46,8 @@ namespace Characters.Player
         private Vector3 _lookDirection;
         private PlayerInteraction _value;
 
+        private bool _isConstructed;
+
         private void OnValidate()
         {
             _rigidbody = GetComponent<Rigidbody>();
@@ -54,6 +56,7 @@ namespace Characters.Player
 
         public void Construct(ISimpleInput simpleInput)
         {
+            _isConstructed = true;
             _simpleInput = simpleInput;
 
             _playerAgent = new PlayerAgent();
@@ -72,6 +75,9 @@ namespace Characters.Player
 
         private void DeInitialize()
         {
+            if (!_isConstructed)
+                return;
+            
             _playerInteraction.DeInitialize();
             
             _simpleInput = null;
@@ -79,6 +85,9 @@ namespace Characters.Player
 
         private void Update()
         {
+            if (!_isConstructed)
+                return;
+            
             _playerAgent.Tick();
             UpdateLook();
             _playerPickup.Tick();

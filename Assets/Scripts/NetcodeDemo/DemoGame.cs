@@ -12,6 +12,7 @@ using Services.Input;
 using Services.Scene;
 using UI.Bars;
 using UI.Bars.Tips;
+using Unity.Netcode;
 using UnityEngine;
 
 namespace Infrastructure
@@ -51,9 +52,13 @@ namespace Infrastructure
         private ISimpleInput _simpleInput;
 
         private bool HasPlayer => _playerController != null;
+        
+        private NetworkManager _networkManager;
 
         private void Awake()
         {
+            _networkManager = NetworkManager.Singleton;
+            
             _simpleInput = AllServices.Container.Single<ISimpleInput>();
             _sceneLoader = AllServices.Container.Single<ISceneLoader>();
 
@@ -66,10 +71,6 @@ namespace Infrastructure
             _tipsBar.Construct(_simpleInput, _camera);
             _arrowBar.Initialize();
 
-            _followingNpc.Construct(AllServices.Container.Single<ITickProcessor>());
-            _patrolNpc.Construct(_path);
-            _bloodhoundNpc.Construct(_cubeSpawnArea);
-        
             _simpleInput.OnTaped += CreatePlayer;
 
             _door.OnOpened += OnDoorOpened;
@@ -102,6 +103,9 @@ namespace Infrastructure
             _playerController.Construct(_simpleInput);
             _playerController.Spawn(_spawnPoint.Position);
 
+            NetworkObject networkObject = _playerController.gameObject.GetComponent<NetworkObject>();
+            networkObject.Spawn();
+
             _scoreBar.Construct(_playerController);
             _tipsBar.Initialize(_playerController);
             _arrowBar.Construct(_playerController, _playerController);
@@ -117,8 +121,6 @@ namespace Infrastructure
             
             _playerController.OnDamaged -= KillPlayerController;
 
-            _followingNpc.DeInitialize();
-            
             LoadMainMenu();
         }
 
