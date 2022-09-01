@@ -5,6 +5,7 @@ using Services.Input;
 using Services.Scene;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace Characters.Player.NetcodeDemo
@@ -41,7 +42,7 @@ namespace Characters.Player.NetcodeDemo
         {
             _networkManager.StartClient();
 
-            LoadLevel();
+            //LoadLevel();
         }
 
         private void RegisterServices()
@@ -75,8 +76,7 @@ namespace Characters.Player.NetcodeDemo
         
         private void LoadLevel()
         {
-            ISceneLoader sceneLoader = _services.Single<ISceneLoader>();
-            sceneLoader.Load(SceneInfos.DEMO_LEVEL);
+            _networkManager.SceneManager.LoadScene(SceneInfos.DEMO_LEVEL, LoadSceneMode.Single);
         }
     }
 }

@@ -111,8 +111,8 @@ namespace Infrastructure
             PlayerController playerControllerPrefab = Resources.Load<PlayerController>("Player");
             
             _playerController = Instantiate(playerControllerPrefab);
-            _playerController.Construct(_simpleInput);
-            _playerController.Spawn(_spawnPoint.Position);
+            //_playerController.Construct(_simpleInput);
+            //_playerController.Spawn(_spawnPoint.Position);
 
             _scoreBar.Construct(_playerController);
             _tipsBar.Initialize(_playerController);

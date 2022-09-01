@@ -87,8 +87,8 @@ GameObject:
   - component: {fileID: 5848125729824148607}
   - component: {fileID: 5848125729824148592}
   - component: {fileID: 4774312129769900971}
-  - component: {fileID: 7912354419492358649}
-  - component: {fileID: 9009174405377692085}
+  - component: {fileID: 6481151393487952725}
+  - component: {fileID: 1813747422601268396}
   m_Layer: 6
   m_Name: Player
   m_TagString: Untagged
@@ -201,6 +201,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3942d43f66201b84283e15d4fa17a76c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _meshRenderer: {fileID: 5848125729824148605}
   _playerMovement:
     _speed: 14
   _playerPickup:
@@ -209,6 +210,9 @@ MonoBehaviour:
   _interactionTrigger: {fileID: 1816177792163289403}
   _rigidbody: {fileID: 5848125729824148607}
   _collider: {fileID: 5848125729824148606}
+  _materials:
+  - {fileID: 2100000, guid: 018305d2408e9cb46bfb49ad8259c783, type: 2}
+  - {fileID: 2100000, guid: fbb057b2f41c59141879b1847aa3bc08, type: 2}
 --- !u!114 &4774312129769900971
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -225,7 +229,7 @@ MonoBehaviour:
   AlwaysReplicateAsRoot: 0
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
---- !u!114 &7912354419492358649
+--- !u!114 &6481151393487952725
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -250,8 +254,8 @@ MonoBehaviour:
   RotAngleThreshold: 0.01
   ScaleThreshold: 0.01
   InLocalSpace: 0
-  Interpolate: 1
---- !u!114 &9009174405377692085
+  Interpolate: 0
+--- !u!114 &1813747422601268396
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

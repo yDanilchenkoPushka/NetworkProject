@@ -1,11 +1,8 @@
-﻿using Characters.Enemy.Bloodhound;
-using Characters.Enemy.Following;
-using Characters.Enemy.Patrol;
+﻿using System.Collections.Generic;
 using Characters.Player;
 using Cube.Picked.Spawner;
 using Damage;
 using Data;
-using Infrastructure.Processors.Tick;
 using InteractiveObjects;
 using Services;
 using Services.Input;
@@ -17,7 +14,7 @@ using UnityEngine;
 
 namespace Infrastructure
 {
-    public class DemoGame : MonoBehaviour
+    public class DemoGame : NetworkBehaviour
     {
         [SerializeField]
         private SpawnPoint _spawnPoint;
@@ -45,15 +42,14 @@ namespace Infrastructure
 
         [SerializeField]
         private Camera _camera;
-
-        private PlayerController _playerController;
+        
         private CubeSpawner _cubeSpawner;
         private ISceneLoader _sceneLoader;
         private ISimpleInput _simpleInput;
 
-        private bool HasPlayer => _playerController != null;
-        
         private NetworkManager _networkManager;
+
+        private List<PlayerController> _players = new List<PlayerController>();
 
         private void Awake()
         {
@@ -71,9 +67,19 @@ namespace Infrastructure
             _tipsBar.Construct(_simpleInput, _camera);
             _arrowBar.Initialize();
 
-            _simpleInput.OnTaped += CreatePlayer;
+            _simpleInput.OnTaped += ClickCreatePlayer;
 
             _door.OnOpened += OnDoorOpened;
+
+            PlayerController.OnPlayerSpawned += OnPlayerSpawned;
+            PlayerController.OnPlayerDeSpawned += OnPlayerDeSpawned;
+        }
+
+        public override void OnNetworkSpawn()
+        {
+            base.OnNetworkSpawn();
+            
+            Debug.Log($"Spawn DemoGame: {_networkManager.LocalClientId}; IsHost: {_networkManager.IsHost}");
         }
 
         private void OnDestroy()
@@ -81,45 +87,67 @@ namespace Infrastructure
             _deviceBar.DeInitialize();
             _tipsBar.DeInitialize();
 
-            _simpleInput.OnTaped -= CreatePlayer;
+            _simpleInput.OnTaped -= ClickCreatePlayer;
         
             _door.OnOpened -= OnDoorOpened;
+            
+            PlayerController.OnPlayerSpawned -= OnPlayerSpawned;
+            PlayerController.OnPlayerDeSpawned -= OnPlayerDeSpawned;
         }
 
         private void Update()
         {
             _tipsBar.Tick();
             _arrowBar.Tick();
+
+            for (int i = 0; i < _players.Count; i++) 
+                _players[i].Tick();
         }
 
-        private void CreatePlayer()
+        private void FixedUpdate()
         {
-            if (HasPlayer)
-                return;
-            
-            PlayerController playerControllerPrefab = Resources.Load<PlayerController>("Player");
-            
-            _playerController = Instantiate(playerControllerPrefab);
-            _playerController.Construct(_simpleInput);
-            _playerController.Spawn(_spawnPoint.Position);
+            for (int i = 0; i < _players.Count; i++) 
+                _players[i].FixedTick();
+        }
 
-            NetworkObject networkObject = _playerController.gameObject.GetComponent<NetworkObject>();
-            networkObject.Spawn();
+        private void ClickCreatePlayer()
+        {
+            Debug.Log("ClickCreatePlayer");
+            CreatePlayerServerRpc(_networkManager.LocalClientId);
+        }
 
-            _scoreBar.Construct(_playerController);
-            _tipsBar.Initialize(_playerController);
-            _arrowBar.Construct(_playerController, _playerController);
+        [ServerRpc(RequireOwnership = false)]
+        private void CreatePlayerServerRpc(ulong localClientId)
+        {
+            string m = _networkManager.IsHost ? "Host" : "NotHost";
+            Debug.Log($"Create player in {m}");
+
+            if (_networkManager.IsHost || _networkManager.IsServer)
+            {
+                PlayerController playerControllerPrefab = Resources.Load<PlayerController>("Player");
+            
+                PlayerController playerController = Instantiate(playerControllerPrefab);
+                
+                _players.Add(playerController);
+                
+                NetworkObject networkObject = playerController.gameObject.GetComponent<NetworkObject>();
+                networkObject.Spawn();
+                
+                playerController.SpawnClientRpc(localClientId, _spawnPoint.Position);
+
+                //_scoreBar.Construct(_playerController);
+                //_tipsBar.Initialize(_playerController);
+
         
-            _playerController.OnDamaged += KillPlayerController;
-            
-            _simpleInput.OnTaped -= CreatePlayer;
+                //playerController.OnDamaged += KillPlayerController;
+            }
         }
 
         private void KillPlayerController()
         {
-            _scoreBar.DeInitialize();
+            //_scoreBar.DeInitialize();
             
-            _playerController.OnDamaged -= KillPlayerController;
+            //_playerController.OnDamaged -= KillPlayerController;
 
             LoadMainMenu();
         }
@@ -132,6 +160,24 @@ namespace Infrastructure
             _sceneLoader.LoadAdditive(SceneInfos.LEVEL_2);
             
             _door.OnOpened -= OnDoorOpened;
+        }
+        
+        [ContextMenu("Print")]
+        public void Print()
+        {
+            Debug.Log(IsOwner);
+        }
+
+        private void OnPlayerSpawned(PlayerController controller)
+        {
+            Debug.Log($"OnPlayerSpawned: {controller.NetworkManager.LocalClientId}");
+            
+            _arrowBar.Construct(controller, controller);
+        }
+        
+        private void OnPlayerDeSpawned(PlayerController controller)
+        {
+            Debug.Log($"OnPlayerDeSpawned: {controller.NetworkManager.LocalClientId}");
         }
     }
 }
