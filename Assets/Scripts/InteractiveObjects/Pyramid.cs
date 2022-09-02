@@ -1,10 +1,11 @@
 ﻿using Interactive;
+using Unity.Netcode;
 using UnityEngine;
 
 namespace InteractiveObjects
 {
     [RequireComponent(typeof(Rigidbody))]
-    public class Pyramid : MonoBehaviour, IInteractable
+    public class Pyramid : NetworkBehaviour, IInteractable
     {
         public bool CanInteract => true;
         public Vector3 Position => transform.position;

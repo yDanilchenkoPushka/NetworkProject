@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Interactive;
 using Services.Input;
+using Unity.Netcode;
 using UnityEngine;
 
 namespace Characters.Player
@@ -40,6 +41,9 @@ namespace Characters.Player
 
         private void Enter(Collider other)
         {
+            if (!NetworkManager.Singleton.IsHost)
+                return;
+            
             if (other.attachedRigidbody == null)
                 return;
             
@@ -59,6 +63,9 @@ namespace Characters.Player
 
         private void Exit(Collider other)
         {
+            if (!NetworkManager.Singleton.IsHost)
+                return;
+            
             if (other.attachedRigidbody == null)
                 return;
             

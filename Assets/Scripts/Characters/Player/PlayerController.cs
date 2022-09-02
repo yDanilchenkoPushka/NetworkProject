@@ -46,26 +46,23 @@ namespace Characters.Player
         private Material[] _materials;
 
         private ISimpleInput _simpleInput;
-        private int _currentScore;
 
         private PlayerAgent _playerAgent;
         private PlayerInteraction _playerInteraction;
         
-        private Vector3 _lookDirection;
         private PlayerInteraction _value;
 
         private bool _isConstructed;
-        
-        
-        //private NetworkVariable<Vector3> _movementAxis = new NetworkVariable<Vector3>();
-        // private NetworkVariable<Vector3> _movementAxisTest = new NetworkVariable<Vector3>(Vector3.zero,
-        //     NetworkVariableReadPermission.Everyone,
-        //     NetworkVariableWritePermission.);
-        
-        private Vector3 _movementAxis;
+
+        //private Vector3 _movementAxis;
         private ulong _localClientId;
         public static event Action<PlayerController> OnPlayerSpawned;
         public static event Action<PlayerController> OnPlayerDeSpawned;
+
+        private Vector3 _movementAxis; 
+        private Vector3 _lookDirection;
+
+        private NetworkVariable<int> _currentScore = new NetworkVariable<int>();
 
         private void OnValidate()
         {
@@ -76,7 +73,7 @@ namespace Characters.Player
         public override void OnNetworkSpawn()
         {
             base.OnNetworkSpawn();
-            
+
             //_movementAxis.Value = Vector3.zero;
             _simpleInput = AllServices.Container.Single<ISimpleInput>();
 
@@ -129,9 +126,9 @@ namespace Characters.Player
 
         private void Update()
         {
-            if (_localClientId != NetworkManager.Singleton.LocalClientId)
+            if (!IsOwner)
                 return;
-
+            
             UpdateLookOnServerRpc(GetLook());
             UpdateMovementAxisOnServerRpc(_simpleInput.MovementAxis);
         }
@@ -156,39 +153,44 @@ namespace Characters.Player
 
         public void Accrue(int score)
         {
-            _currentScore += score;
+            _currentScore.Value += score;
         
-            OnScoreUpdated?.Invoke(_currentScore);
+            OnScoreUpdated?.Invoke(_currentScore.Value);
+            
+            Debug.Log($"Updated score: {_currentScore.Value}");
         }
 
         public void HandlePickup(IPickable pickable) => 
             _playerPickup.HandlePickup(pickable);
 
-        private Vector2 GetLook()
+        private Vector3 GetLook()
         {
-            Vector2 look = _simpleInput.LookAxis;
-            
-            if(look.magnitude >= 0.1f)
-                _lookDirection = new Vector3(look.x, 0, look.y).normalized;
+            Vector2 direction = _simpleInput.LookAxis;
+            Vector3 look = Vector3.zero;
 
-            return _lookDirection;
+            if(direction.magnitude >= 0.1f)
+                look = new Vector3(direction.x, 0, direction.y).normalized;
+
+            return look;
         }
 
-        public void HandleCollecting()
+        [ServerRpc]
+        public void HandleCollectingOnServerRpc()
         {
             Accrue(1);
         }
 
-        [ServerRpc(RequireOwnership = false)]
+        [ServerRpc]
         private void UpdateMovementAxisOnServerRpc(Vector3 movementAxis, ServerRpcParams serverRpcParams = default)
         {
             _movementAxis = movementAxis;
         }
         
-        [ServerRpc(RequireOwnership = false)]
+        [ServerRpc]
         private void UpdateLookOnServerRpc(Vector3 lookDirection, ServerRpcParams serverRpcParams = default)
         {
-            _lookDirection = lookDirection;
+            if (lookDirection.magnitude >= 0.1f)
+                _lookDirection = lookDirection;
         }
     }
 }

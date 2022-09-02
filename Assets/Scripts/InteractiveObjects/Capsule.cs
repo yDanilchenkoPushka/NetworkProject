@@ -1,10 +1,11 @@
 ﻿using Characters.Player;
 using Interactive;
+using Unity.Netcode;
 using UnityEngine;
 
 namespace InteractiveObjects
 {
-    public class Capsule : MonoBehaviour, IInteractable, IPickable
+    public class Capsule : NetworkBehaviour, IInteractable, IPickable
     {
         public Rigidbody Rigidbody => _rigidbody;
         public Transform Transform => transform;

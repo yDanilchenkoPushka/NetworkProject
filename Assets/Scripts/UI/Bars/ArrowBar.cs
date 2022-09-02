@@ -1,4 +1,5 @@
 ﻿using System;
+using Unity.Netcode;
 using UnityEngine;
 
 namespace UI.Bars
@@ -34,15 +35,14 @@ namespace UI.Bars
             _positionable = positionable;
             
             Show();
+            
+            Place();
         }
 
         public void Tick()
         {
-            if (IsValidate)
-            {
-                Place();
-                Turn();
-            }
+            Place();
+            Turn();
         }
 
         private void Show() => 

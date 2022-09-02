@@ -39,6 +39,8 @@ namespace Services.Input
 
         public RewiredInput()
         {
+            Debug.Log("Create RewiredInput");
+            
             _player = ReInput.players.GetPlayer(0);
             
             _player.AddInputEventDelegate(OnUpButtonDown, UpdateLoopType.Update, "Move_up");

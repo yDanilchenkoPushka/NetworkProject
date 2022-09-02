@@ -33,46 +33,48 @@ namespace Infrastructure
 
         [SerializeField]
         private TipsBar _tipsBar;
-    
-        [SerializeField]
-        private ArrowBar _arrowBar;
 
         [SerializeField]
         private Door _door;
 
         [SerializeField]
         private Camera _camera;
-        
+
+        [SerializeField]
+        private Transform _cubePoolRoot;
+
         private CubeSpawner _cubeSpawner;
         private ISceneLoader _sceneLoader;
         private ISimpleInput _simpleInput;
-
         private NetworkManager _networkManager;
-
         private List<PlayerController> _players = new List<PlayerController>();
+        private List<ArrowBar> _arrowBars = new List<ArrowBar>();
+
+        private PlayerController _playerController;
 
         private void Awake()
         {
             _networkManager = NetworkManager.Singleton;
-            
+
             _simpleInput = AllServices.Container.Single<ISimpleInput>();
             _sceneLoader = AllServices.Container.Single<ISceneLoader>();
 
             _cubeSpawnArea.Initialize();
+
+            if (_networkManager.IsHost)
+            {
+                _cubeSpawner = new CubeSpawner(_cubeSpawnArea, _damageZones, this, _cubePoolRoot);
+                _cubeSpawner.Initialize();
+            }
             
-            _cubeSpawner = new CubeSpawner(_cubeSpawnArea, _damageZones, this);
-            _cubeSpawner.Initialize();
-        
             _deviceBar.Construct(_simpleInput);
             _tipsBar.Construct(_simpleInput, _camera);
-            _arrowBar.Initialize();
 
             _simpleInput.OnTaped += ClickCreatePlayer;
 
             _door.OnOpened += OnDoorOpened;
 
             PlayerController.OnPlayerSpawned += OnPlayerSpawned;
-            PlayerController.OnPlayerDeSpawned += OnPlayerDeSpawned;
         }
 
         public override void OnNetworkSpawn()
@@ -92,36 +94,37 @@ namespace Infrastructure
             _door.OnOpened -= OnDoorOpened;
             
             PlayerController.OnPlayerSpawned -= OnPlayerSpawned;
-            PlayerController.OnPlayerDeSpawned -= OnPlayerDeSpawned;
         }
 
         private void Update()
         {
+            if(!_networkManager.IsHost)
+                return;
+            
             _tipsBar.Tick();
-            _arrowBar.Tick();
 
             for (int i = 0; i < _players.Count; i++) 
                 _players[i].Tick();
+
+            for (int i = 0; i < _arrowBars.Count; i++) 
+                _arrowBars[i].Tick();
         }
 
         private void FixedUpdate()
         {
+            if(!_networkManager.IsHost)
+                return;
+            
             for (int i = 0; i < _players.Count; i++) 
                 _players[i].FixedTick();
         }
 
-        private void ClickCreatePlayer()
-        {
-            Debug.Log("ClickCreatePlayer");
+        private void ClickCreatePlayer() => 
             CreatePlayerServerRpc(_networkManager.LocalClientId);
-        }
 
         [ServerRpc(RequireOwnership = false)]
         private void CreatePlayerServerRpc(ulong localClientId)
         {
-            string m = _networkManager.IsHost ? "Host" : "NotHost";
-            Debug.Log($"Create player in {m}");
-
             if (_networkManager.IsHost || _networkManager.IsServer)
             {
                 PlayerController playerControllerPrefab = Resources.Load<PlayerController>("Player");
@@ -130,17 +133,30 @@ namespace Infrastructure
                 
                 _players.Add(playerController);
                 
-                NetworkObject networkObject = playerController.gameObject.GetComponent<NetworkObject>();
-                networkObject.Spawn();
-                
+                playerController.gameObject.GetComponent<NetworkObject>().SpawnAsPlayerObject(localClientId, true);
+
                 playerController.SpawnClientRpc(localClientId, _spawnPoint.Position);
 
-                //_scoreBar.Construct(_playerController);
+                ArrowBar arrowBar = CreateArrowBar();
+                arrowBar.Construct(playerController, playerController);
+                
+                arrowBar.GetComponent<NetworkObject>().SpawnWithOwnership(localClientId, true);
+                
                 //_tipsBar.Initialize(_playerController);
 
-        
                 //playerController.OnDamaged += KillPlayerController;
             }
+        }
+
+        private ArrowBar CreateArrowBar()
+        {
+            ArrowBar arrowBarPrefab = Resources.Load<ArrowBar>("ArrowBar");
+            
+            ArrowBar arrowBar = Instantiate(arrowBarPrefab);
+                
+            _arrowBars.Add(arrowBar);
+
+            return arrowBar;
         }
 
         private void KillPlayerController()
@@ -161,23 +177,20 @@ namespace Infrastructure
             
             _door.OnOpened -= OnDoorOpened;
         }
-        
-        [ContextMenu("Print")]
-        public void Print()
-        {
-            Debug.Log(IsOwner);
-        }
 
-        private void OnPlayerSpawned(PlayerController controller)
+        private void OnPlayerSpawned(PlayerController playerController)
         {
-            Debug.Log($"OnPlayerSpawned: {controller.NetworkManager.LocalClientId}");
-            
-            _arrowBar.Construct(controller, controller);
-        }
-        
-        private void OnPlayerDeSpawned(PlayerController controller)
-        {
-            Debug.Log($"OnPlayerDeSpawned: {controller.NetworkManager.LocalClientId}");
+            if (playerController.IsOwner)
+            {
+                _simpleInput.OnTaped -= ClickCreatePlayer;
+                
+                _playerController = playerController;
+                PlayerController.OnPlayerSpawned -= OnPlayerSpawned;
+                
+                Debug.Log("Spawn local player!");
+                
+                _scoreBar.Construct(_playerController);
+            }
         }
     }
 }

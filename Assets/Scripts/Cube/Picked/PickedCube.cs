@@ -1,12 +1,10 @@
 ﻿using System;
-using Characters.Enemy.Patrol;
-using Interactive;
-using Score;
+using Unity.Netcode;
 using UnityEngine;
 
 namespace Cube.Picked
 {
-    public class PickedCube : MonoBehaviour, IBoundable
+    public class PickedCube : NetworkBehaviour, IBoundable
     {
         public event Action<PickedCube> OnPicked;
         public Vector3 Position => transform.position;
@@ -24,13 +22,36 @@ namespace Cube.Picked
         private float _rotationSpeed;
         
 
-        public void Initialize(Transform root)
+        // public void Initialize(Transform root)
+        // {
+        //     gameObject.SetActive(false);
+        //     
+        //     transform.parent = root;
+        // }
+
+        [ClientRpc]
+        public void InitializeOnClientRpc()
         {
             gameObject.SetActive(false);
-            
-            transform.parent = root;
         }
 
+        [ClientRpc]
+        public void SpawnOnClientRpc(Vector3 at)
+        {
+            transform.position = at;
+            transform.rotation = Quaternion.identity;
+            
+            gameObject.SetActive(true);
+        }
+        
+        [ClientRpc]
+        public void DeSpawnOnClientRpc()
+        {
+            //transform.parent = root;
+            
+            gameObject.SetActive(false);
+        }
+        
         public void Spawn(Vector3 at, Transform root)
         {
             transform.parent = root;
@@ -43,7 +64,7 @@ namespace Cube.Picked
 
         public void DeSpawn(Transform root)
         {
-            transform.parent = root;
+            //transform.parent = root;
             
             gameObject.SetActive(false);
         }
@@ -56,12 +77,21 @@ namespace Cube.Picked
 
         private void OnTriggerEnter(Collider other)
         {
+            if (!NetworkManager.IsHost)
+                return;
+            
             if (other.TryGetComponent(out ICollectHandler handler))
             {
-                handler.HandleCollecting();
+                handler.HandleCollectingOnServerRpc();
                 
                 OnPicked?.Invoke(this);
             }
+        }
+
+        [ContextMenu("Pick")]
+        private void ClickPick()
+        {
+            OnPicked?.Invoke(this);
         }
     }
 }

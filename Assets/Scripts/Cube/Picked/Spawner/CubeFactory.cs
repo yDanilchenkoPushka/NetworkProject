@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -17,12 +18,12 @@ namespace Cube.Picked.Spawner
 
         private readonly Transform _root;
 
-        public CubeFactory(int count)
+        public CubeFactory(int count, Transform root)
         {
             _pickedCubePrefab = Resources.Load<PickedCube>("PickedCube");
 
-            _root = new GameObject("[Cube_Pool]").transform;
-            
+            //_root = new GameObject("[Cube_Pool]").transform;
+
             Expand(count);
         }
 
@@ -31,15 +32,15 @@ namespace Cube.Picked.Spawner
             if (TryGetFree(out Data data))
             {
                 data.SetDirty();
-
+            
                 PickedCube pickedCube = data.PickedCube;
-                pickedCube.Spawn(at, null);
+                pickedCube.SpawnOnClientRpc(at);
                 
                 return pickedCube;
             }
             
             Expand(1);
-
+            
             return Take(in at);
         }
 
@@ -48,10 +49,10 @@ namespace Cube.Picked.Spawner
             if (TryFind(pickedCube, out Data data))
             {
                 DeSpawn(data);
-
+            
                 return;
             }
-
+            
             throw new Exception("Unknown cube");
         }
 
@@ -75,7 +76,10 @@ namespace Cube.Picked.Spawner
             for (int i = 0; i < count; i++)
             {
                 PickedCube pickedCube = Object.Instantiate(_pickedCubePrefab);
-                pickedCube.Initialize(_root);
+                
+                pickedCube.GetComponent<NetworkObject>().Spawn();
+                
+                pickedCube.InitializeOnClientRpc();
                 
                 _pool.Add(new Data(pickedCube));
             }
@@ -118,16 +122,16 @@ namespace Cube.Picked.Spawner
 
         public void CleanAll()
         {
-            for (int i = 0; i < _pool.Count; i++)
-            {
-                if (_pool[i].IsDirty) 
-                    DeSpawn(_pool[i]);
-            }
+            // for (int i = 0; i < _pool.Count; i++)
+            // {
+            //     if (_pool[i].IsDirty) 
+            //         DeSpawn(_pool[i]);
+            // }
         }
 
         private void DeSpawn(Data data)
         {
-            data.PickedCube.DeSpawn(_root);
+            data.PickedCube.DeSpawnOnClientRpc();
             data.Clean();
             
             OnCleaned?.Invoke(data.PickedCube);

@@ -1,7 +1,10 @@
-﻿namespace Cube.Picked
+﻿using Unity.Netcode;
+
+namespace Cube.Picked
 {
     public interface ICollectHandler
     {
-        void HandleCollecting();
+        [ServerRpc]
+        void HandleCollectingOnServerRpc();
     }
 }

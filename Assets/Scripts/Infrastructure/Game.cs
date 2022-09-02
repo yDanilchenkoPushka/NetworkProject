@@ -71,8 +71,8 @@ namespace Infrastructure
 
             _cubeSpawnArea.Initialize();
             
-            _cubeSpawner = new CubeSpawner(_cubeSpawnArea, _damageZones, this);
-            _cubeSpawner.Initialize();
+            // _cubeSpawner = new CubeSpawner(_cubeSpawnArea, _damageZones, this, TODO);
+            // _cubeSpawner.Initialize();
         
             _deviceBar.Construct(_simpleInput);
             _tipsBar.Construct(_simpleInput, _camera);

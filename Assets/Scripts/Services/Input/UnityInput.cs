@@ -42,6 +42,8 @@ namespace Services.Input
 
         public UnityInput(TextMeshProUGUI logLabel)
         {
+            Debug.Log("Create UnityInput");
+            
             _controls = new Controls();
 
             if (logLabel != null)

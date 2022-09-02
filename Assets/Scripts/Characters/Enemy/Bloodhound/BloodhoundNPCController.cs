@@ -67,5 +67,10 @@ namespace Characters.Enemy.Bloodhound
                 Gizmos.DrawSphere(_targetPosition, 0.4f);
             }
         }
+
+        public void HandleCollectingOnServerRpc()
+        {
+            
+        }
     }
 }

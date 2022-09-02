@@ -21,13 +21,15 @@ namespace Cube.Picked.Spawner
 
         private int _spawnAttemptsCounter;
 
-        public CubeSpawner(CubeSpawnArea spawnArea, IBoundable[] damageBoundables, MonoBehaviour mono)
+        public CubeSpawner(CubeSpawnArea spawnArea, IBoundable[] damageBoundables, MonoBehaviour mono, Transform root)
         {
+            Debug.Log("Crete cube spawner");
+            
             _spawnArea = spawnArea;
             _damageBoundables = damageBoundables;
             _mono = mono;
             
-            _cubeFactory = new CubeFactory(StartCount);
+            _cubeFactory = new CubeFactory(StartCount, root);
 
             _cubeFactory.OnCleaned += OnCubeCleaned;
         }
@@ -75,7 +77,7 @@ namespace Cube.Picked.Spawner
                 return;
             }
                 
-           Spawn();
+            Spawn();
         }
 
         private bool CheckPosition(in Vector3 position)
