@@ -7,6 +7,7 @@ namespace InteractiveObjects
     [RequireComponent(typeof(Rigidbody))]
     public class Pyramid : NetworkBehaviour, IInteractable
     {
+        public bool HasBusy => _hasBusy;
         public bool CanInteract => true;
         public Vector3 Position => transform.position;
         
@@ -16,15 +17,19 @@ namespace InteractiveObjects
         [SerializeField, HideInInspector]
         private Rigidbody _rigidbody;
 
+        private bool _hasBusy;
+
         private void OnValidate() => 
             _rigidbody = GetComponent<Rigidbody>();
 
         public void EnterInteractive()
         {
+            _hasBusy = true;
         }
 
         public void ExitInteractive()
         {
+            _hasBusy = false;
         }
         
         public void Interact(object sender) => 

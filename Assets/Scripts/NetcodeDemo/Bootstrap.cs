@@ -1,4 +1,5 @@
-﻿using Data;
+﻿using System;
+using Data;
 using Infrastructure.Processors.Tick;
 using Services;
 using Services.Input;
@@ -29,6 +30,12 @@ namespace Characters.Player.NetcodeDemo
             
             _createGameButton.onClick.AddListener(CreateGame);
             _connectGameButton.onClick.AddListener(ConnectGame);
+        }
+
+        private void OnDestroy()
+        {
+            _createGameButton.onClick.RemoveListener(CreateGame);
+            _connectGameButton.onClick.RemoveListener(ConnectGame);
         }
 
         private void CreateGame()

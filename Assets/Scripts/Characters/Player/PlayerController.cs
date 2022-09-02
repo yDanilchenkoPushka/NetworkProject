@@ -24,6 +24,8 @@ namespace Characters.Player
         public Vector3 Position => transform.position;
         public Vector3 LookDirection => _lookDirection;
 
+        public NetworkVariable<int> CurrentScore => _currentScore;
+
         [SerializeField] 
         private MeshRenderer _meshRenderer;
         
@@ -73,6 +75,8 @@ namespace Characters.Player
         public override void OnNetworkSpawn()
         {
             base.OnNetworkSpawn();
+            
+            Debug.Log($"Spawn player {NetworkManager.LocalClientId}; IsHost: {NetworkManager.IsHost}");
 
             //_movementAxis.Value = Vector3.zero;
             _simpleInput = AllServices.Container.Single<ISimpleInput>();
@@ -88,6 +92,9 @@ namespace Characters.Player
             _lookDirection = transform.forward;
 
             //_meshRenderer.material = _materials[materialIndex];
+            
+            if(IsOwner)
+                _simpleInput.OnInteracted += ClickInteract;
 
             OnPlayerSpawned?.Invoke(this);
         }
@@ -97,6 +104,9 @@ namespace Characters.Player
             base.OnNetworkDespawn();
             
             OnPlayerDeSpawned?.Invoke(this);
+            
+            if(IsOwner)
+                _simpleInput.OnInteracted -= ClickInteract;
         }
 
         private void OnDestroy() => 
@@ -156,8 +166,6 @@ namespace Characters.Player
             _currentScore.Value += score;
         
             OnScoreUpdated?.Invoke(_currentScore.Value);
-            
-            Debug.Log($"Updated score: {_currentScore.Value}");
         }
 
         public void HandlePickup(IPickable pickable) => 
@@ -174,7 +182,7 @@ namespace Characters.Player
             return look;
         }
 
-        [ServerRpc]
+        [ServerRpc(RequireOwnership = false)]
         public void HandleCollectingOnServerRpc()
         {
             Accrue(1);
@@ -191,6 +199,20 @@ namespace Characters.Player
         {
             if (lookDirection.magnitude >= 0.1f)
                 _lookDirection = lookDirection;
+        }
+
+        private void ClickInteract()
+        {
+            if (!IsOwner)
+                return;
+
+            ClickInteractOnServerRpc(NetworkManager.LocalClientId);
+        }
+
+        [ServerRpc]
+        private void ClickInteractOnServerRpc(ulong localClientId)
+        {
+            Debug.Log($"IsHost: {NetworkManager.IsHost}; Player {localClientId} click interact!");
         }
     }
 }

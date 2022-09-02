@@ -9,7 +9,7 @@ namespace InteractiveObjects
     public class Door : MonoBehaviour, IInteractable
     {
         public event Action OnOpened;
-        
+        public bool HasBusy => _hasBusy;
         public bool CanInteract => !_isOpened;
         public Vector3 Position => transform.position;
         
@@ -24,6 +24,7 @@ namespace InteractiveObjects
 
         private Tween _animation;
         private bool _isOpened;
+        private bool _hasBusy;
 
         public void Awake()
         {
@@ -37,12 +38,18 @@ namespace InteractiveObjects
 
         public void EnterInteractive()
         {
+            _hasBusy = true;
+            
             if(CanInteract) 
                 SetOutline(true);
         }
 
-        public void ExitInteractive() => 
+        public void ExitInteractive()
+        {
+            _hasBusy = false;
+
             SetOutline(false);
+        }
 
         public void Interact(object sender) => 
             Open();

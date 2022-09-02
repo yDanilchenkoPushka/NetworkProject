@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using Characters.Player;
 using Cube.Picked.Spawner;
 using Damage;
@@ -7,6 +8,7 @@ using InteractiveObjects;
 using Services;
 using Services.Input;
 using Services.Scene;
+using TMPro;
 using UI.Bars;
 using UI.Bars.Tips;
 using Unity.Netcode;
@@ -43,6 +45,9 @@ namespace Infrastructure
         [SerializeField]
         private Transform _cubePoolRoot;
 
+        [SerializeField]
+        private TextMeshProUGUI _playerInfo;
+
         private CubeSpawner _cubeSpawner;
         private ISceneLoader _sceneLoader;
         private ISimpleInput _simpleInput;
@@ -55,6 +60,9 @@ namespace Infrastructure
         private void Awake()
         {
             _networkManager = NetworkManager.Singleton;
+
+            string info = $"Player {_networkManager.LocalClientId}; IsHost: {NetworkManager.IsHost}";
+            _playerInfo.text = info;
 
             _simpleInput = AllServices.Container.Single<ISimpleInput>();
             _sceneLoader = AllServices.Container.Single<ISceneLoader>();
@@ -75,13 +83,6 @@ namespace Infrastructure
             _door.OnOpened += OnDoorOpened;
 
             PlayerController.OnPlayerSpawned += OnPlayerSpawned;
-        }
-
-        public override void OnNetworkSpawn()
-        {
-            base.OnNetworkSpawn();
-            
-            Debug.Log($"Spawn DemoGame: {_networkManager.LocalClientId}; IsHost: {_networkManager.IsHost}");
         }
 
         private void OnDestroy()
@@ -186,11 +187,11 @@ namespace Infrastructure
                 
                 _playerController = playerController;
                 PlayerController.OnPlayerSpawned -= OnPlayerSpawned;
-                
-                Debug.Log("Spawn local player!");
-                
+
                 _scoreBar.Construct(_playerController);
             }
         }
+        
+       
     }
 }

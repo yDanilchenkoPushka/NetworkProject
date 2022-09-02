@@ -17,16 +17,16 @@ namespace UI.Bars
             
             SetScore(0);
 
-            _scoreReader.OnScoreUpdated += UpdateScore;
+            _scoreReader.CurrentScore.OnValueChanged += UpdateScore;
         }
 
         public void DeInitialize() => 
-            _scoreReader.OnScoreUpdated -= UpdateScore;
-
-        private void UpdateScore(int score) =>
-            SetScore(score);
+            _scoreReader.CurrentScore.OnValueChanged -= UpdateScore;
 
         private void SetScore(int score) => 
             _scoreTitle.text = score.ToString();
+
+        private void UpdateScore(int previousvalue, int newvalue) => 
+            SetScore(newvalue);
     }
 }

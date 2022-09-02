@@ -11,8 +11,8 @@ namespace Damage
         
         private void OnTriggerEnter(Collider other)
         {
-            if (other.TryGetComponent(out IDamageable damageable)) 
-                damageable.TakeDamage();
+            // if (other.TryGetComponent(out IDamageable damageable)) 
+            //     damageable.TakeDamage();
         }
     }
 }

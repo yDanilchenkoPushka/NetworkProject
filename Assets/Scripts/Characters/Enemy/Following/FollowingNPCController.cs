@@ -17,6 +17,7 @@ namespace Characters.Enemy.Following
         public bool HasTarget => _target != null;
         public IEnemyTarget Target => _target;
 
+        public bool HasBusy { get; }
         public bool CanInteract => true;
         public Vector3 Position => transform.position;
         

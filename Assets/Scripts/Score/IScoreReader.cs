@@ -1,9 +1,10 @@
 ﻿using System;
+using Unity.Netcode;
 
 namespace Score
 {
     public interface IScoreReader
     {
-        event Action<int> OnScoreUpdated;
+        NetworkVariable<int> CurrentScore { get; }
     }
 }

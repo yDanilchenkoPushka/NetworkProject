@@ -8,18 +8,20 @@ namespace Cube.Picked.Spawner
 {
     public class CubeFactory
     {
-        public event Action<PickedCube> OnCleaned; 
-        
+        private readonly CubeEffectFactory _cubeEffectFactory;
+        public event Action<PickedCube> OnCleaned;
+
         public Vector3 CubeSize => _pickedCubePrefab.Size;
-        
+
         private readonly PickedCube _pickedCubePrefab;
 
         private readonly List<Data> _pool = new List<Data>();
 
         private readonly Transform _root;
 
-        public CubeFactory(int count, Transform root)
+        public CubeFactory(int count, Transform root, CubeEffectFactory cubeEffectFactory)
         {
+            _cubeEffectFactory = cubeEffectFactory;
             _pickedCubePrefab = Resources.Load<PickedCube>("PickedCube");
 
             //_root = new GameObject("[Cube_Pool]").transform;
@@ -32,15 +34,15 @@ namespace Cube.Picked.Spawner
             if (TryGetFree(out Data data))
             {
                 data.SetDirty();
-            
+
                 PickedCube pickedCube = data.PickedCube;
                 pickedCube.SpawnOnClientRpc(at);
-                
+
                 return pickedCube;
             }
-            
+
             Expand(1);
-            
+
             return Take(in at);
         }
 
@@ -49,10 +51,10 @@ namespace Cube.Picked.Spawner
             if (TryFind(pickedCube, out Data data))
             {
                 DeSpawn(data);
-            
+
                 return;
             }
-            
+
             throw new Exception("Unknown cube");
         }
 
@@ -76,11 +78,11 @@ namespace Cube.Picked.Spawner
             for (int i = 0; i < count; i++)
             {
                 PickedCube pickedCube = Object.Instantiate(_pickedCubePrefab);
-                
+
                 pickedCube.GetComponent<NetworkObject>().Spawn();
-                
+
                 pickedCube.InitializeOnClientRpc();
-                
+
                 _pool.Add(new Data(pickedCube));
             }
         }
@@ -89,7 +91,7 @@ namespace Cube.Picked.Spawner
         {
             for (int i = 0; i < _pool.Count; i++)
             {
-                if(_pool[i].IsDirty)
+                if (_pool[i].IsDirty)
                     continue;
 
                 data = _pool[i];
@@ -104,7 +106,7 @@ namespace Cube.Picked.Spawner
         {
             public readonly PickedCube PickedCube;
             public bool IsDirty => _isDirty;
-            
+
             private bool _isDirty;
 
             public Data(PickedCube pickedCube)
@@ -113,10 +115,10 @@ namespace Cube.Picked.Spawner
                 _isDirty = false;
             }
 
-            public void SetDirty() => 
+            public void SetDirty() =>
                 _isDirty = true;
 
-            public void Clean() => 
+            public void Clean() =>
                 _isDirty = false;
         }
 
@@ -131,9 +133,11 @@ namespace Cube.Picked.Spawner
 
         private void DeSpawn(Data data)
         {
+            _cubeEffectFactory.Take(data.PickedCube.Position);
+            
             data.PickedCube.DeSpawnOnClientRpc();
             data.Clean();
-            
+
             OnCleaned?.Invoke(data.PickedCube);
         }
     }

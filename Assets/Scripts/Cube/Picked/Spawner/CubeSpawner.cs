@@ -14,6 +14,7 @@ namespace Cube.Picked.Spawner
 
         private readonly CubeSpawnArea _spawnArea;
         private readonly CubeFactory _cubeFactory;
+        private readonly CubeEffectFactory _cubeEffectFactory;
         private readonly MonoBehaviour _mono;
 
         private readonly IBoundable[] _damageBoundables;
@@ -23,13 +24,12 @@ namespace Cube.Picked.Spawner
 
         public CubeSpawner(CubeSpawnArea spawnArea, IBoundable[] damageBoundables, MonoBehaviour mono, Transform root)
         {
-            Debug.Log("Crete cube spawner");
-            
             _spawnArea = spawnArea;
             _damageBoundables = damageBoundables;
             _mono = mono;
-            
-            _cubeFactory = new CubeFactory(StartCount, root);
+
+            _cubeEffectFactory = new CubeEffectFactory();
+            _cubeFactory = new CubeFactory(StartCount, root, _cubeEffectFactory);
 
             _cubeFactory.OnCleaned += OnCubeCleaned;
         }
