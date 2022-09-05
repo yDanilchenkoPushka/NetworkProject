@@ -27,7 +27,8 @@ namespace UI.Bars.Tips
         private TipLabel _labelPrefab;
 
         private ISimpleInput _simpleInput;
-        private IInteractionEvents _interactionEvents;
+
+        private List<IInteractionEvents> _handlers = new List<IInteractionEvents>();
 
         private Dictionary<IInteractable, TipLabel> _labels = new Dictionary<IInteractable, TipLabel>();
         private TipsFactory _tipsFactory;
@@ -41,30 +42,65 @@ namespace UI.Bars.Tips
             _tipsFactory = new TipsFactory(_labelPrefab, GetComponent<RectTransform>());
         }
 
-        public void Initialize(IOut<IInteractionEvents> interactionEvents)
+        // public void Initialize(IOut<IInteractionEvents> interactionEvents)
+        // {
+        //     _interactionEvents = interactionEvents.Value;
+        //     
+        //     _simpleInput.OnDeviceUpdated += UpdateLabels;
+        //     
+        //     _interactionEvents.OnEntered += OnInteractiveEntered;
+        //     _interactionEvents.OnExited += OnInteractiveExited;
+        // }
+        
+        // public void DeInitialize()
+        // {
+        //     _simpleInput.OnDeviceUpdated -= UpdateLabels;
+        //     
+        //     if (_interactionEvents == null)
+        //         return;
+        //
+        //     _interactionEvents.OnEntered -= OnInteractiveEntered;
+        //     _interactionEvents.OnExited -= OnInteractiveExited;
+        // }
+        
+        public void RegisterInteractiveHandler(IInteractionEvents handler)
         {
-            _interactionEvents = interactionEvents.Value;
+            if(_handlers.Contains(handler))
+                return;
             
-            _simpleInput.OnDeviceUpdated += UpdateLabels;
+            _handlers.Add(handler);
             
-            _interactionEvents.OnEntered += OnInteractiveEntered;
-            _interactionEvents.OnExited += OnInteractiveExited;
+            handler.OnEntered += OnInteractiveEntered;
+            handler.OnExited += OnInteractiveExited;
+        }
+        
+        public void UnRegisterInteractiveHandler(IInteractionEvents handler)
+        {
+            if (_handlers.Contains(handler))
+            {
+                _handlers.Remove(handler);
+                
+                handler.OnEntered -= OnInteractiveEntered;
+                handler.OnExited -= OnInteractiveExited;
+            }
+        }
+
+        public void DeInitialize()
+        {
+            for (int i = 0; i < _handlers.Count; i++)
+            {
+                IInteractionEvents handler = _handlers[i];
+                
+                handler.OnEntered -= OnInteractiveEntered;
+                handler.OnExited -= OnInteractiveExited;
+            }
+            
+            _handlers.Clear();
         }
 
         public void Tick()
         {
             UpdateLabels();
-        }
-
-        public void DeInitialize()
-        {
-            _simpleInput.OnDeviceUpdated -= UpdateLabels;
-            
-            if (_interactionEvents == null)
-                return;
-
-            _interactionEvents.OnEntered -= OnInteractiveEntered;
-            _interactionEvents.OnExited -= OnInteractiveExited;
         }
 
         private void UpdateLabels(DeviceType deviceType) => 

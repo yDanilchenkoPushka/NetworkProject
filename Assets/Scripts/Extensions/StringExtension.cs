@@ -2,7 +2,7 @@
 
 namespace Extensions
 {
-    public static class String
+    public static class StringExtension
     {
         public static bool IsMatch(this string input, string pattern)
         {

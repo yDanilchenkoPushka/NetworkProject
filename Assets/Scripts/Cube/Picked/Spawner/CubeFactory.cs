@@ -19,7 +19,7 @@ namespace Cube.Picked.Spawner
 
         private readonly Transform _root;
 
-        public CubeFactory(int count, Transform root, CubeEffectFactory cubeEffectFactory)
+        public CubeFactory(int count, CubeEffectFactory cubeEffectFactory)
         {
             _cubeEffectFactory = cubeEffectFactory;
             _pickedCubePrefab = Resources.Load<PickedCube>("PickedCube");

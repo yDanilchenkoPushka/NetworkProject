@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections;
+using Characters.Player;
 using DG.Tweening;
 using Interactive;
+using Services;
+using Unity.Netcode;
 using UnityEngine;
 
 namespace InteractiveObjects
@@ -9,10 +12,10 @@ namespace InteractiveObjects
     public class Door : MonoBehaviour, IInteractable
     {
         public event Action OnOpened;
-        public bool HasBusy => _hasBusy;
+        public bool IsDirty => _isDirty;
         public bool CanInteract => !_isOpened;
         public Vector3 Position => transform.position;
-        
+
         [SerializeField]
         private float _animationTime;
 
@@ -24,7 +27,7 @@ namespace InteractiveObjects
 
         private Tween _animation;
         private bool _isOpened;
-        private bool _hasBusy;
+        private bool _isDirty;
 
         public void Awake()
         {
@@ -38,7 +41,7 @@ namespace InteractiveObjects
 
         public void EnterInteractive()
         {
-            _hasBusy = true;
+            _isDirty = true;
             
             if(CanInteract) 
                 SetOutline(true);
@@ -46,7 +49,7 @@ namespace InteractiveObjects
 
         public void ExitInteractive()
         {
-            _hasBusy = false;
+            _isDirty = false;
 
             SetOutline(false);
         }

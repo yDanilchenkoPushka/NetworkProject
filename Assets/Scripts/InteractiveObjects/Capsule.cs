@@ -1,5 +1,7 @@
-﻿using Characters.Player;
+﻿using System;
+using Characters.Player;
 using Interactive;
+using Services;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -9,7 +11,8 @@ namespace InteractiveObjects
     {
         public Rigidbody Rigidbody => _rigidbody;
         public Transform Transform => transform;
-        public bool HasBusy => _hasBusy;
+        public ulong ObjectId => _networkObject.NetworkObjectId;
+        public bool IsDirty => _isDirty;
         public bool CanInteract => true;
         public Vector3 Position => transform.position;
         public Collider Collider => _collider;
@@ -20,19 +23,25 @@ namespace InteractiveObjects
         [SerializeField, HideInInspector]
         private Rigidbody _rigidbody;
 
-        private bool _hasBusy;
+        [SerializeField, HideInInspector]
+        private NetworkObject _networkObject;
+        
+        private bool _isDirty;
 
-        private void OnValidate() => 
+        private void OnValidate()
+        {
             _rigidbody = GetComponent<Rigidbody>();
+            _networkObject = GetComponent<NetworkObject>();
+        }
 
         public void EnterInteractive()
         {
-            _hasBusy = true;
+            _isDirty = true;
         }
 
         public void ExitInteractive()
         {
-            _hasBusy = false;
+            _isDirty = false;
         }
         
         public void Interact(object sender)

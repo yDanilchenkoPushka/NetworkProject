@@ -43,9 +43,6 @@ namespace Infrastructure
         private Camera _camera;
 
         [SerializeField]
-        private Transform _cubePoolRoot;
-
-        [SerializeField]
         private TextMeshProUGUI _playerInfo;
 
         private CubeSpawner _cubeSpawner;
@@ -71,7 +68,7 @@ namespace Infrastructure
 
             if (_networkManager.IsHost)
             {
-                _cubeSpawner = new CubeSpawner(_cubeSpawnArea, _damageZones, this, _cubePoolRoot);
+                _cubeSpawner = new CubeSpawner(_cubeSpawnArea, _damageZones, this);
                 _cubeSpawner.Initialize();
             }
             
@@ -104,8 +101,8 @@ namespace Infrastructure
             
             _tipsBar.Tick();
 
-            for (int i = 0; i < _players.Count; i++) 
-                _players[i].Tick();
+            // for (int i = 0; i < _players.Count; i++) 
+            //     _players[i].Tick();
 
             for (int i = 0; i < _arrowBars.Count; i++) 
                 _arrowBars[i].Tick();
@@ -116,8 +113,8 @@ namespace Infrastructure
             if(!_networkManager.IsHost)
                 return;
             
-            for (int i = 0; i < _players.Count; i++) 
-                _players[i].FixedTick();
+            // for (int i = 0; i < _players.Count; i++) 
+            //     _players[i].FixedTick();
         }
 
         private void ClickCreatePlayer() => 
@@ -142,8 +139,6 @@ namespace Infrastructure
                 arrowBar.Construct(playerController, playerController);
                 
                 arrowBar.GetComponent<NetworkObject>().SpawnWithOwnership(localClientId, true);
-                
-                //_tipsBar.Initialize(_playerController);
 
                 //playerController.OnDamaged += KillPlayerController;
             }
@@ -183,6 +178,9 @@ namespace Infrastructure
         {
             if (playerController.IsOwner)
             {
+                IOut<IInteractionEvents> handlerData = playerController;
+                _tipsBar.RegisterInteractiveHandler(handlerData.Value);
+                
                 _simpleInput.OnTaped -= ClickCreatePlayer;
                 
                 _playerController = playerController;
@@ -191,7 +189,5 @@ namespace Infrastructure
                 _scoreBar.Construct(_playerController);
             }
         }
-        
-       
     }
 }

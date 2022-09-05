@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Interactive;
-using Services.Input;
-using Unity.Netcode;
 using UnityEngine;
 
 namespace Characters.Player
@@ -14,35 +12,29 @@ namespace Characters.Player
         public event Action OnUpdated;
 
         private readonly CheckerTrigger _interactionTrigger;
-        private readonly ISimpleInput _simpleInput;
 
         private readonly List<IInteractable> _interactables = new List<IInteractable>();
         private readonly object _sender;
 
-        public PlayerInteraction(CheckerTrigger interactionTrigger, ISimpleInput simpleInput, object sender)
+        public PlayerInteraction(CheckerTrigger interactionTrigger, object sender)
         {
             _interactionTrigger = interactionTrigger;
-            _simpleInput = simpleInput;
             _sender = sender;
 
             _interactionTrigger.OnEntered += Enter;
             _interactionTrigger.OnExited += Exit;
-            
-            _simpleInput.OnInteracted += Interact;
         }
 
         public void DeInitialize()
         {
             _interactionTrigger.OnEntered -= Enter;
             _interactionTrigger.OnExited -= Exit;
-            
-            _simpleInput.OnInteracted -= Interact;
         }
 
         private void Enter(Collider other)
         {
-            if (!NetworkManager.Singleton.IsHost)
-                return;
+            // if (!NetworkManager.Singleton.IsHost)
+            //     return;
             
             if (other.attachedRigidbody == null)
                 return;
@@ -50,6 +42,9 @@ namespace Characters.Player
             if (other.attachedRigidbody.TryGetComponent<IInteractable>(out IInteractable interaction))
             {
                 if (_interactables.Contains(interaction))
+                    return;
+
+                if (interaction.IsDirty)
                     return;
                 
                 _interactables.Add(interaction);
@@ -63,8 +58,8 @@ namespace Characters.Player
 
         private void Exit(Collider other)
         {
-            if (!NetworkManager.Singleton.IsHost)
-                return;
+            // if (!NetworkManager.Singleton.IsHost)
+            //     return;
             
             if (other.attachedRigidbody == null)
                 return;
@@ -83,7 +78,7 @@ namespace Characters.Player
             }
         }
         
-        private void Interact()
+        public void Interact()
         {
             for (int i = 0; i < _interactables.Count; i++)
             {

@@ -10,14 +10,14 @@ using UnityEngine.AI;
 namespace Characters.Enemy.Following
 {
     [RequireComponent(typeof(NavMeshAgent))]
-    public class FollowingNPCController : MonoBehaviour, IInteractable, ITargetInfo
+    public class FollowingNPCController : MonoBehaviour//, IInteractable, ITargetInfo
     {
         public event Action OnTargetUpdated;
         
         public bool HasTarget => _target != null;
         public IEnemyTarget Target => _target;
 
-        public bool HasBusy { get; }
+        public bool IsDirty { get; }
         public bool CanInteract => true;
         public Vector3 Position => transform.position;
         
@@ -44,12 +44,12 @@ namespace Characters.Enemy.Following
             
             _stateMachine = stateMachine;
             
-            stateMachine.RegisterStates(
-                new IdleState(_stateMachine, this),
-                new FollowingState(_stateMachine, transform, _agent, MinDistance, 
-                    this, tickProcessor, _speedHandler));
-
-            _stateMachine.ChangeState<IdleState>();
+            // stateMachine.RegisterStates(
+            //     new IdleState(_stateMachine, this),
+            //     new FollowingState(_stateMachine, transform, _agent, MinDistance, 
+            //         this, tickProcessor, _speedHandler));
+            //
+            // _stateMachine.ChangeState<IdleState>();
         }
 
         public void DeInitialize()

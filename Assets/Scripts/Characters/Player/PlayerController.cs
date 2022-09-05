@@ -2,7 +2,6 @@ using System;
 using Characters.Enemy.Following;
 using Cube.Picked;
 using Damage;
-using Interactive;
 using Score;
 using Services;
 using Services.Input;
@@ -22,7 +21,7 @@ namespace Characters.Player
         public event Action<int> OnScoreUpdated;
 
         public Vector3 Position => transform.position;
-        public Vector3 LookDirection => _lookDirection;
+        public Vector3 LookDirection => _lookDirection.Value;
 
         public NetworkVariable<int> CurrentScore => _currentScore;
 
@@ -46,6 +45,8 @@ namespace Characters.Player
 
         [SerializeField]
         private Material[] _materials;
+        
+        private PlayerHud _playerHud;
 
         private ISimpleInput _simpleInput;
 
@@ -53,18 +54,18 @@ namespace Characters.Player
         private PlayerInteraction _playerInteraction;
         
         private PlayerInteraction _value;
-
-        private bool _isConstructed;
-
-        //private Vector3 _movementAxis;
-        private ulong _localClientId;
+        
         public static event Action<PlayerController> OnPlayerSpawned;
         public static event Action<PlayerController> OnPlayerDeSpawned;
 
-        private Vector3 _movementAxis; 
-        private Vector3 _lookDirection;
+        private NetworkVariable<Vector3> _movementAxis = new NetworkVariable<Vector3>(Vector3.zero,
+            NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+        
+        private NetworkVariable<Vector3> _lookDirection = new NetworkVariable<Vector3>(Vector3.zero,
+            NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
         private NetworkVariable<int> _currentScore = new NetworkVariable<int>();
+        private NetworkVariable<NetworkString> _playerName = new NetworkVariable<NetworkString>();
 
         private void OnValidate()
         {
@@ -75,26 +76,32 @@ namespace Characters.Player
         public override void OnNetworkSpawn()
         {
             base.OnNetworkSpawn();
-            
-            Debug.Log($"Spawn player {NetworkManager.LocalClientId}; IsHost: {NetworkManager.IsHost}");
 
-            //_movementAxis.Value = Vector3.zero;
+            Debug.Log($"Spawn player {NetworkManager.LocalClientId}; IsHost: {NetworkManager.IsHost}");
+            
             _simpleInput = AllServices.Container.Single<ISimpleInput>();
 
             _playerAgent = new PlayerAgent();
             _playerAgent.Construct(transform);
             
-            _playerInteraction = new PlayerInteraction(_interactionTrigger, _simpleInput, this);
+            _playerInteraction = new PlayerInteraction(_interactionTrigger, this);
         
             _playerMovement.Construct(_rigidbody, _playerAgent);
             _playerPickup.Construct(transform, _rigidbody, _collider, this);
-
-            _lookDirection = transform.forward;
-
-            //_meshRenderer.material = _materials[materialIndex];
             
-            if(IsOwner)
+            //_meshRenderer.material = _materials[materialIndex];
+
+            if (IsOwner)
+            {
+                _lookDirection.Value = transform.forward;
+                
                 _simpleInput.OnInteracted += ClickInteract;
+            }
+
+            if (IsHost) 
+                _playerName.Value = $"Player {OwnerClientId}";
+
+            CreatePlayerHud();
 
             OnPlayerSpawned?.Invoke(this);
         }
@@ -107,6 +114,8 @@ namespace Characters.Player
             
             if(IsOwner)
                 _simpleInput.OnInteracted -= ClickInteract;
+            
+            Destroy(_playerHud.gameObject);
         }
 
         private void OnDestroy() => 
@@ -114,46 +123,56 @@ namespace Characters.Player
 
         private void DeInitialize()
         {
-            if (!_isConstructed)
-                return;
-            
-            _playerInteraction.DeInitialize();
+            //_playerInteraction.DeInitialize();
             
             _simpleInput = null;
         }
 
-        public void Tick()
-        {
-            // _playerAgent.Tick();
-            // UpdateLook();
-            // _playerPickup.Tick();
-        }
 
-        public void FixedTick()
-        {
-            _playerMovement.Move(_movementAxis);
-        }
+        // public void Tick()
+        // {
+        //     _playerAgent.Tick();
+        //     UpdateLook();
+        //     _playerPickup.Tick();
+        // }
 
         private void Update()
         {
-            if (!IsOwner)
+            _playerHud.UpdatePosition(transform.position);
+
+            if (IsHost)
+            {
+                _playerPickup.Tick();
+            }
+
+            if (IsOwner)
+            {
+                Vector3 look = GetLook();
+                if (look.magnitude >= 0.1f)
+                    _lookDirection.Value = look;
+            
+                _movementAxis.Value = _simpleInput.MovementAxis;
+            }
+        }
+
+        private void FixedUpdate()
+        {
+            if (!IsHost)
                 return;
             
-            UpdateLookOnServerRpc(GetLook());
-            UpdateMovementAxisOnServerRpc(_simpleInput.MovementAxis);
+            _playerMovement.Move(_movementAxis.Value);
         }
+
 
         // public void Spawn(Vector3 at)
         // {
         //     transform.position = at;
         //     transform.rotation = Quaternion.identity;
         // }
-        
+
         [ClientRpc]
         public void SpawnClientRpc(ulong localClientId, Vector3 at)
         {
-            _localClientId = localClientId;
-            
             transform.position = at;
             transform.rotation = Quaternion.identity;
         }
@@ -188,31 +207,27 @@ namespace Characters.Player
             Accrue(1);
         }
 
-        [ServerRpc]
-        private void UpdateMovementAxisOnServerRpc(Vector3 movementAxis, ServerRpcParams serverRpcParams = default)
-        {
-            _movementAxis = movementAxis;
-        }
-        
-        [ServerRpc]
-        private void UpdateLookOnServerRpc(Vector3 lookDirection, ServerRpcParams serverRpcParams = default)
-        {
-            if (lookDirection.magnitude >= 0.1f)
-                _lookDirection = lookDirection;
-        }
-
         private void ClickInteract()
         {
             if (!IsOwner)
                 return;
 
-            ClickInteractOnServerRpc(NetworkManager.LocalClientId);
+            ClickInteractOnServerRpc();
         }
 
         [ServerRpc]
-        private void ClickInteractOnServerRpc(ulong localClientId)
+        private void ClickInteractOnServerRpc()
         {
-            Debug.Log($"IsHost: {NetworkManager.IsHost}; Player {localClientId} click interact!");
+            Debug.Log($"Player {OwnerClientId} interact!");
+            
+            _playerInteraction.Interact();
+        }
+
+        private void CreatePlayerHud()
+        {
+            _playerHud = Instantiate(Resources.Load<PlayerHud>("PlayerHud"));
+            _playerHud.UpdateLabel(_playerName.Value);
+            _playerHud.UpdatePosition(transform.position);
         }
     }
 }

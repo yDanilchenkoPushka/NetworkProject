@@ -213,6 +213,7 @@ MonoBehaviour:
   _materials:
   - {fileID: 2100000, guid: 018305d2408e9cb46bfb49ad8259c783, type: 2}
   - {fileID: 2100000, guid: fbb057b2f41c59141879b1847aa3bc08, type: 2}
+  _playerHud: {fileID: 0}
 --- !u!114 &4774312129769900971
 MonoBehaviour:
   m_ObjectHideFlags: 0

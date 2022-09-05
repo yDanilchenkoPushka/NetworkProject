@@ -115,7 +115,7 @@ namespace Infrastructure
             //_playerController.Spawn(_spawnPoint.Position);
 
             _scoreBar.Construct(_playerController);
-            _tipsBar.Initialize(_playerController);
+            //_tipsBar.Initialize(_playerController);
             _arrowBar.Construct(_playerController, _playerController);
         
             _playerController.OnDamaged += KillPlayerController;

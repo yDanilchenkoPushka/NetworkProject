@@ -1,4 +1,6 @@
-﻿using Interactive;
+﻿using Characters.Player;
+using Interactive;
+using Services;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -7,29 +9,29 @@ namespace InteractiveObjects
     [RequireComponent(typeof(Rigidbody))]
     public class Pyramid : NetworkBehaviour, IInteractable
     {
-        public bool HasBusy => _hasBusy;
+        public bool IsDirty => _isDirty;
         public bool CanInteract => true;
         public Vector3 Position => transform.position;
-        
+
         [SerializeField]
         private float _force;
 
         [SerializeField, HideInInspector]
         private Rigidbody _rigidbody;
 
-        private bool _hasBusy;
+        private bool _isDirty;
 
         private void OnValidate() => 
             _rigidbody = GetComponent<Rigidbody>();
 
         public void EnterInteractive()
         {
-            _hasBusy = true;
+            _isDirty = true;
         }
 
         public void ExitInteractive()
         {
-            _hasBusy = false;
+            _isDirty = false;
         }
         
         public void Interact(object sender) => 

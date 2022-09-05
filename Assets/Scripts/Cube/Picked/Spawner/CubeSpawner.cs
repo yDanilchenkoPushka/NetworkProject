@@ -22,14 +22,14 @@ namespace Cube.Picked.Spawner
 
         private int _spawnAttemptsCounter;
 
-        public CubeSpawner(CubeSpawnArea spawnArea, IBoundable[] damageBoundables, MonoBehaviour mono, Transform root)
+        public CubeSpawner(CubeSpawnArea spawnArea, IBoundable[] damageBoundables, MonoBehaviour mono)
         {
             _spawnArea = spawnArea;
             _damageBoundables = damageBoundables;
             _mono = mono;
 
             _cubeEffectFactory = new CubeEffectFactory();
-            _cubeFactory = new CubeFactory(StartCount, root, _cubeEffectFactory);
+            _cubeFactory = new CubeFactory(StartCount, _cubeEffectFactory);
 
             _cubeFactory.OnCleaned += OnCubeCleaned;
         }
